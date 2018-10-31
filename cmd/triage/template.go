@@ -32,6 +32,14 @@ var htmltemplate = `<!DOCTYPE html>
     .p-card__title {
       max-width: 100%;
     }
+    .refresh-form {
+      margin-top: 0.3rem;
+      right: 1.5rem;
+      position: absolute;
+    }
+    .refresh-form i {
+      margin-top: 0.7rem;
+    }
   </style>
 </head>
 <body>
@@ -39,6 +47,9 @@ var htmltemplate = `<!DOCTYPE html>
     <div class="p-navigation__banner">
       <div class="p-navigation__logo">
         <span class="p-navigation__tagline">Issue Triage</span>
+        <form class="u-align--right refresh-form" action="/refresh" method="post" id="refresh" >
+          <input class="p-button--neutral u-align--right" value="Refresh" type="submit">
+        </form>
       </div>
   </header>
 
@@ -62,6 +73,13 @@ var htmltemplate = `<!DOCTYPE html>
     </div>
   </div>
   {{end}}
+
+  <script>
+    var refresh = document.getElementById('refresh');
+    refresh.addEventListener('submit', function(){
+      refresh.innerHTML = '<i class="p-icon--spinner u-animation--spin"></i>';
+    });
+  </script>
 
 </body>
 </html>

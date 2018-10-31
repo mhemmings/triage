@@ -53,15 +53,43 @@ func main() {
 
 	client := triage.NewGithubClient(os.Getenv("GITHUB_TOKEN"))
 
+	log.Printf("Collecting issues for %d repos", len(repos))
+
+	populateIssues(client, &repos)
+
+	var err error
+	t := template.New("main")
+	t, err = t.Parse(htmltemplate)
+	if err != nil {
+		log.Fatalf("Error parsing template: %v", err)
+	}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t.Execute(w, templateData{Repos: repos})
+	})
+
+	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
+		populateIssues(client, &repos)
+		http.Redirect(w, r, "/", http.StatusFound)
+	})
+
+	log.Printf("Serving issue triage on http://localhost:%s\n", port)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+}
+
+// populateIssues takes a slice of repos and uses the provided client to repopulate the issues
+// list for each repo.
+func populateIssues(client triage.Client, repos *[]repo) {
 	var wg sync.WaitGroup
-	for i, repo := range repos {
+	for i, repo := range *repos {
 		wg.Add(1)
 		i := i
 		repo := repo
 		go func() {
 			defer wg.Done()
 			var err error
-			repos[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name)
+			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name)
 			if err != nil {
 				log.Printf("Error gettings issues from %s, Error: %v", repo.FullName, err)
 				return
@@ -70,16 +98,6 @@ func main() {
 	}
 
 	wg.Wait()
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		t := template.New("main")    //name of the template is main
-		t, _ = t.Parse(htmltemplate) // parsing of template string
-		t.Execute(w, templateData{Repos: repos})
-	})
-
-	log.Printf("Serving issue triage on http://localhost:%s\n", port)
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
 
 // parseRepoListFile takes a file name, and parses the repo list from that file

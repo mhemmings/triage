@@ -39,5 +39,4 @@ The Github API has strict rate limits for unauthenticated requests. It is recomm
 - Better tests
 - More outputs (static, JSON etc)
 - More providers (Bitbucket etc)
-- Server currenly needs restarting to reload
 - Ability to triage without visiting Github

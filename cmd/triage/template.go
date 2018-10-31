@@ -54,25 +54,38 @@ var htmltemplate = `<!DOCTYPE html>
   </header>
 
   {{ range $repoI, $repo := .Repos }}
+  {{ if gt (len $repo.Issues) 0 }}
+    <div class="row">
+      <div class="col-12">
+        <h2><a href="{{$repo.IssuesLink}}" target="_blank">{{$repo.FullName}}</a></h2>
+      </div>
+      <div class="col-12">
+        {{ range $issueI, $issue := $repo.Issues }}
+        <div class="p-card--highlighted">
+          <h4 class="p-card__title"><a href="{{$issue.Link}}" target="_blank">{{$issue.Title}}</a></h4>
+          <p class="p-card__content">
+            {{$issue.Created.Format "02 Jan 2006" }} |
+            <i class="p-icon--user"></i> {{$issue.User}} |
+            {{$issue.Comments}} comments
+          </p>
+        </div>
+        {{end}}
+        <hr>
+      </div>
+    </div>
+  {{end}}
+  {{end}}
+
   <div class="row">
     <div class="col-12">
-      <h2><a href="{{$repo.IssuesLink}}" target="_blank">{{$repo.FullName}}</a></h2>
-    </div>
-    <div class="col-12">
-      {{ range $issueI, $issue := $repo.Issues }}
-      <div class="p-card--highlighted">
-        <h4 class="p-card__title"><a href="{{$issue.Link}}" target="_blank">{{$issue.Title}}</a></h4>
-        <p class="p-card__content">
-          {{$issue.Created.Format "02 Jan 2006" }} |
-          <i class="p-icon--user"></i> {{$issue.User}} |
-          {{$issue.Comments}} comments
-        </p>
-      </div>
+      <h2>Nothing to triage:</h2>
+      {{ range $repoI, $repo := .Repos }}
+      {{ if eq (len $repo.Issues) 0 }}
+        <h4><a href="{{$repo.IssuesLink}}" target="_blank">{{$repo.FullName}}</a></h4>
       {{end}}
-      <hr>
+      {{end}}
     </div>
   </div>
-  {{end}}
 
   <script>
     var refresh = document.getElementById('refresh');

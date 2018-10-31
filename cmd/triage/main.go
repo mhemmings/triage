@@ -64,7 +64,7 @@ func main() {
 			var err error
 			repos[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name)
 			if err != nil {
-				log.Errorf("Error gettings issurs from %s, Error: %v", repo.FullName, err)
+				log.Printf("Error gettings issues from %s, Error: %v", repo.FullName, err)
 				return
 			}
 			log.Printf("Found %d issues in %s", len(repos[i].Issues), repos[i].FullName)

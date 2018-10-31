@@ -13,9 +13,9 @@ type GithubClient struct {
 	client *github.Client
 }
 
-// NewGithubClient returns Guthub client created from the provided auth
+// NewGithubClient returns Github client created from the provided auth
 // token.
-// If no token is provided, the client with interact with the Guthub API
+// If no token is provided, the client with interact with the Github API
 // without authentication. Doing this imposes much stricter API rate limits.
 // See https://developer.github.com/v3/#rate-limiting.
 func NewGithubClient(token string) Client {

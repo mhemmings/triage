@@ -5,7 +5,7 @@ Provide a list of repositories, and get back all the issues that haven't been tr
 ## Installation
 
 ```console
-go get github.com/mhemmings/triage
+go get github.com/mhemmings/triage/cmd/triage
 ```
 
 ## Usage
@@ -39,3 +39,5 @@ The Github API has strict rate limits for unauthenticated requests. It is recomm
 - Better tests
 - More outputs (static, JSON etc)
 - More providers (Bitbucket etc)
+- Server currenly needs restarting to reload
+- Ability to triage without visiting Github

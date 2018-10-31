@@ -58,7 +58,6 @@ func main() {
 		wg.Add(1)
 		i := i
 		repo := repo
-		log.Println("Searching for issues in:", repo.FullName)
 		go func() {
 			defer wg.Done()
 			var err error
@@ -67,7 +66,6 @@ func main() {
 				log.Printf("Error gettings issues from %s, Error: %v", repo.FullName, err)
 				return
 			}
-			log.Printf("Found %d issues in %s", len(repos[i].Issues), repos[i].FullName)
 		}()
 	}
 

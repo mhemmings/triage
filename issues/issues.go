@@ -1,4 +1,4 @@
-package triage
+package issues
 
 import (
 	"strconv"

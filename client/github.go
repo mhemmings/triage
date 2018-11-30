@@ -1,4 +1,4 @@
-package triage
+package client
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/google/go-github/v18/github"
+	"github.com/mhemmings/triage/issues"
 	"golang.org/x/oauth2"
 )
 
@@ -37,8 +38,8 @@ func NewGithubClient(token string) Client {
 // GetIssuesForTriage returns a list of untriaged issues for the given repository, or an error.
 // If labels is empty, only issues with no labels will be shown.
 // If showAll is true, all issues will be returned, regardless of label.
-func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string, labels []string, showAll bool) ([]Issue, error) {
-	var allIssues []Issue
+func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string, labels []string, showAll bool) ([]issues.Issue, error) {
+	var allIssues []issues.Issue
 
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
@@ -49,12 +50,12 @@ func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, rep
 	}
 
 	for {
-		issues, resp, err := gh.client.Issues.ListByRepo(ctx, owner, repo, opt)
+		ghIssues, resp, err := gh.client.Issues.ListByRepo(ctx, owner, repo, opt)
 		if err != nil {
 			return allIssues, err
 		}
 
-		for _, issue := range issues {
+		for _, issue := range ghIssues {
 			if issue.PullRequestLinks != nil {
 				// If the issue is actually a PR, skip.
 				continue
@@ -65,7 +66,7 @@ func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, rep
 				continue
 			}
 
-			iss := Issue{
+			iss := issues.Issue{
 				Title:    *issue.Title,
 				Link:     *issue.HTMLURL,
 				User:     *issue.User.Login,
@@ -73,7 +74,7 @@ func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, rep
 				Created:  *issue.CreatedAt,
 			}
 			for _, label := range issue.Labels {
-				iss.Labels = append(iss.Labels, Label{
+				iss.Labels = append(iss.Labels, issues.Label{
 					Name:   *label.Name,
 					Colour: fmt.Sprintf("#%s", *label.Color),
 				})

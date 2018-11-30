@@ -5,7 +5,7 @@ Provide a list of repositories, and get back all the issues that haven't been tr
 ## Installation
 
 ```console
-go get github.com/mhemmings/triage/cmd/triage
+go get github.com/mhemmings/triage
 ```
 
 ## Usage

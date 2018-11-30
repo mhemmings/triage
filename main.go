@@ -13,13 +13,15 @@ import (
 	"sync"
 
 	"github.com/juju/gnuflag"
-	"github.com/mhemmings/triage"
+	"github.com/mhemmings/triage/client"
+	"github.com/mhemmings/triage/issues"
+	"github.com/mhemmings/triage/repository"
 )
 
 // repo holds a triage.Repo and a list of Isuues associated with it.
 type repo struct {
-	triage.Repo
-	Issues []triage.Issue
+	repository.Repo
+	Issues []issues.Issue
 }
 
 type labels []string
@@ -52,7 +54,7 @@ func main() {
 
 	// Has an individual repo been provided in the command?
 	if singleRepo != "" {
-		r, err := triage.ParseGithubRepo(singleRepo)
+		r, err := repository.ParseGithubRepo(singleRepo)
 		if err != nil {
 			log.Fatalf("%s is not a valid Github repository", singleRepo)
 		}
@@ -68,11 +70,11 @@ func main() {
 		repos = append(repos, reposFromFile...)
 	}
 
-	client := triage.NewGithubClient(os.Getenv("TRIAGE_GITHUB_TOKEN"))
+	ghClient := client.NewGithubClient(os.Getenv("TRIAGE_GITHUB_TOKEN"))
 
 	log.Printf("Collecting issues for %d repos", len(repos))
 
-	populateIssues(client, &repos, labels, showAll)
+	populateIssues(ghClient, &repos, labels, showAll)
 
 	var err error
 	t := template.New("main")
@@ -86,7 +88,7 @@ func main() {
 	})
 
 	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
-		populateIssues(client, &repos, labels, showAll)
+		populateIssues(ghClient, &repos, labels, showAll)
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
 
@@ -97,7 +99,7 @@ func main() {
 
 // populateIssues takes a slice of repos and uses the provided client to repopulate the issues
 // list for each repo.
-func populateIssues(client triage.Client, repos *[]repo, labels labels, showAll bool) {
+func populateIssues(client client.Client, repos *[]repo, labels labels, showAll bool) {
 	var wg sync.WaitGroup
 	for i, repo := range *repos {
 		wg.Add(1)
@@ -141,7 +143,7 @@ func parseRepoList(filename string, r io.Reader) ([]repo, error) {
 		lineNum++
 
 		// TODO: Infer the correct client here, instead of just using Github.
-		r, err := triage.ParseGithubRepo(fileScanner.Text())
+		r, err := repository.ParseGithubRepo(fileScanner.Text())
 		if err != nil {
 			return nil, err
 		}

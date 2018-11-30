@@ -72,7 +72,13 @@ func main() {
 		repos = append(repos, reposFromFile...)
 	}
 
-	ghClient := client.NewGithubClient(os.Getenv("TRIAGE_GITHUB_TOKEN"))
+	ghToken := os.Getenv("TRIAGE_GITHUB_TOKEN")
+	if ghToken == "" {
+		// Look for legacy token
+		ghToken = os.Getenv("GITHUB_TOKEN")
+	}
+
+	ghClient := client.NewGithubClient(ghToken)
 
 	log.Printf("Collecting issues for %d repos", len(repos))
 

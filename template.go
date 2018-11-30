@@ -91,7 +91,7 @@ var htmltemplate = `<!DOCTYPE html>
       <h2>Nothing to triage:</h2>
       {{ range $repoI, $repo := .Repos }}
       {{ if eq (len $repo.Issues) 0 }}
-        <h4><a href="{{$repo.IssuesLink}}" target="_blank">{{$repo.FullName}}</a></h4>
+        <h4>{{if $repo.Error}}<i class="p-icon--warning"></i> {{end}}<a href="{{$repo.IssuesLink}}" target="_blank"> {{$repo.FullName}}</a></h4>
       {{end}}
       {{end}}
     </div>

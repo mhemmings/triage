@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/go-github/v18/github"
 	"github.com/juju/gnuflag"
 	"github.com/mhemmings/triage/client"
 	"github.com/mhemmings/triage/issues"
@@ -22,6 +23,7 @@ import (
 type repo struct {
 	repository.Repo
 	Issues []issues.Issue
+	Error  error
 }
 
 type labels []string
@@ -109,8 +111,15 @@ func populateIssues(client client.Client, repos *[]repo, labels labels, showAll 
 			defer wg.Done()
 			var err error
 			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name, labels, showAll)
+			(*repos)[i].Error = err
 			if err != nil {
-				log.Printf("Error gettings issues from %s, Error: %v", repo.FullName, err)
+				log.Printf("Error gettings issues from %s, Error: %v\n", repo.FullName, err)
+				if ghErr, ok := err.(*github.ErrorResponse); ok {
+					if ghErr.Response.StatusCode == http.StatusNotFound {
+						log.Println("The repository could not be found, or you are not allowed to view it")
+						log.Println("Have you set TRIAGE_GITHUB_TOKEN?")
+					}
+				}
 				return
 			}
 		}()

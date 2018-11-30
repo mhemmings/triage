@@ -5,13 +5,13 @@ Provide a list of repositories, and get back all the issues that haven't been tr
 ## Installation
 
 ```console
-go get github.com/mhemmings/triage
+$ go get github.com/mhemmings/triage
 ```
 
 ## Usage
 
 ```console
-triage repolist
+$ triage repolist
 ```
 
 Where repolist is a file containing a list of repositories, for example:
@@ -27,8 +27,17 @@ Once all the issues are collected, a simple webpage will be served displaying th
 An individual repository can also be passed without the need to use a separate repo list file:
 
 ```console
-triage -r "owner/reponame"
+$ triage -r "owner/reponame"
 ```
+
+By default, only unlabeled issues are shown. A comma-separated list of label names can be provided with `-l/--labels` to override this and match only those label names.
+
+
+```console
+$ triage --labels bug,todo,critical repolist
+```
+
+Or all issues can be gathered, regardless of label status using `--all`.
 
 ## Github Auth
 

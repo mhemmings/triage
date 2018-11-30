@@ -32,7 +32,7 @@ triage -r "owner/reponame"
 
 ## Github Auth
 
-The Github API has strict rate limits for unauthenticated requests. It is recommended you [generate a token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) and set this to the `GITHUB_TOKEN` environment variable to authenticate your requests. This will also give you access to private repositories.
+The Github API has strict rate limits for unauthenticated requests. It is recommended you [generate a token](https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) and set this to the `TRIAGE_GITHUB_TOKEN` environment variable to authenticate your requests. This will also give you access to private repositories.
 
 ## TODO
 

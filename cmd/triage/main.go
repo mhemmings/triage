@@ -68,7 +68,7 @@ func main() {
 		repos = append(repos, reposFromFile...)
 	}
 
-	client := triage.NewGithubClient(os.Getenv("GITHUB_TOKEN"))
+	client := triage.NewGithubClient(os.Getenv("TRIAGE_GITHUB_TOKEN"))
 
 	log.Printf("Collecting issues for %d repos", len(repos))
 

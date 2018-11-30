@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/juju/gnuflag"
@@ -21,13 +22,29 @@ type repo struct {
 	Issues []triage.Issue
 }
 
+type labels []string
+
+func (l labels) String() string {
+	return strings.Join(l, ",")
+}
+
+func (l *labels) Set(str string) error {
+	*l = strings.Split(str, ",")
+	return nil
+}
+
 func main() {
 	var port string
 	var singleRepo string
+	var labels labels
+	var showAll bool
 	gnuflag.StringVar(&port, "port", "8080", "HTTP port to use for serving HTML page")
 	gnuflag.StringVar(&port, "p", "8080", "HTTP port to use for serving HTML page")
 	gnuflag.StringVar(&singleRepo, "repo", "", "An individual repo to check")
 	gnuflag.StringVar(&singleRepo, "r", "", "An individual repo to check")
+	gnuflag.Var(&labels, "labels", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
+	gnuflag.Var(&labels, "l", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
+	gnuflag.BoolVar(&showAll, "all", false, "Show all issues. All label filters will be ignored")
 
 	gnuflag.Parse(true)
 
@@ -55,7 +72,7 @@ func main() {
 
 	log.Printf("Collecting issues for %d repos", len(repos))
 
-	populateIssues(client, &repos)
+	populateIssues(client, &repos, labels, showAll)
 
 	var err error
 	t := template.New("main")
@@ -69,7 +86,7 @@ func main() {
 	})
 
 	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
-		populateIssues(client, &repos)
+		populateIssues(client, &repos, labels, showAll)
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
 
@@ -80,7 +97,7 @@ func main() {
 
 // populateIssues takes a slice of repos and uses the provided client to repopulate the issues
 // list for each repo.
-func populateIssues(client triage.Client, repos *[]repo) {
+func populateIssues(client triage.Client, repos *[]repo, labels labels, showAll bool) {
 	var wg sync.WaitGroup
 	for i, repo := range *repos {
 		wg.Add(1)
@@ -89,7 +106,7 @@ func populateIssues(client triage.Client, repos *[]repo) {
 		go func() {
 			defer wg.Done()
 			var err error
-			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name)
+			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name, labels, showAll)
 			if err != nil {
 				log.Printf("Error gettings issues from %s, Error: %v", repo.FullName, err)
 				return

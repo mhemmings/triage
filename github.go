@@ -2,6 +2,7 @@ package triage
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/google/go-github/v18/github"
@@ -34,13 +35,17 @@ func NewGithubClient(token string) Client {
 }
 
 // GetIssuesForTriage returns a list of untriaged issues for the given repository, or an error.
-// We treat any issue without a label as being untriaged.
-func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string) ([]Issue, error) {
+// If labels is empty, only issues with no labels will be shown.
+// If showAll is true, all issues will be returned, regardless of label.
+func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string, labels []string, showAll bool) ([]Issue, error) {
 	var allIssues []Issue
 
-	// Currenly no way to get just issues without a label, so we get them all and filter later.
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	if !showAll {
+		opt.Labels = labels
 	}
 
 	for {
@@ -50,18 +55,30 @@ func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, rep
 		}
 
 		for _, issue := range issues {
-			if issue.PullRequestLinks != nil || len(issue.Labels) > 0 {
-				// If the issue is actually a PR, or if it has labels, we're not interested.
+			if issue.PullRequestLinks != nil {
+				// If the issue is actually a PR, skip.
 				continue
 			}
 
-			allIssues = append(allIssues, Issue{
+			if !showAll && len(labels) == 0 && len(issue.Labels) > 0 {
+				// Currenly no way to get just issues without a label, so we get them all and filter now.
+				continue
+			}
+
+			iss := Issue{
 				Title:    *issue.Title,
 				Link:     *issue.HTMLURL,
 				User:     *issue.User.Login,
 				Comments: *issue.Comments,
 				Created:  *issue.CreatedAt,
-			})
+			}
+			for _, label := range issue.Labels {
+				iss.Labels = append(iss.Labels, Label{
+					Name:   *label.Name,
+					Colour: fmt.Sprintf("#%s", *label.Color),
+				})
+			}
+			allIssues = append(allIssues, iss)
 		}
 
 		if resp.NextPage == 0 {

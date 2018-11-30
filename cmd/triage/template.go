@@ -40,6 +40,11 @@ var htmltemplate = `<!DOCTYPE html>
     .refresh-form i {
       margin-top: 0.7rem;
     }
+    .label {
+      padding: 3px 5px;
+      border-radius: 20px;
+      font-size: 9pt;
+    }
   </style>
 </head>
 <body>
@@ -63,11 +68,16 @@ var htmltemplate = `<!DOCTYPE html>
         {{ range $issueI, $issue := $repo.Issues }}
         <div class="p-card--highlighted">
           <h4 class="p-card__title"><a href="{{$issue.Link}}" target="_blank">{{$issue.Title}}</a></h4>
-          <p class="p-card__content">
+          <div class="p-card__content">
+            <div>
+              {{ range $labelI, $label := $issue.Labels }}
+              <span class="label" style="background-color:{{$label.Colour}};color:{{$label.TextColour}};">{{$label.Name}}</span>
+              {{end}}
+            </div>
             {{$issue.Created.Format "02 Jan 2006" }} |
             <i class="p-icon--user"></i> {{$issue.User}} |
             {{$issue.Comments}} comments
-          </p>
+          </div>
         </div>
         {{end}}
         <hr>

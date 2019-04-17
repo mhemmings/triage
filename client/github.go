@@ -35,18 +35,20 @@ func NewGithubClient(token string) Client {
 	}
 }
 
-// GetIssuesForTriage returns a list of untriaged issues for the given repository, or an error.
-// If labels is empty, only issues with no labels will be shown.
-// If showAll is true, all issues will be returned, regardless of label.
-func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string, labels []string, showAll bool) ([]issues.Issue, error) {
+// GetIssuesForTriage returns a list of untriaged issues for the given repository filtered by the provided IssueFilters, or an error.
+func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, repo string, filters IssueFilters) ([]issues.Issue, error) {
 	var allIssues []issues.Issue
 
 	opt := &github.IssueListByRepoOptions{
 		ListOptions: github.ListOptions{PerPage: 100},
 	}
 
-	if !showAll {
-		opt.Labels = labels
+	if !filters.Since.AsTime().IsZero() {
+		opt.Since = filters.Since.AsTime()
+	}
+
+	if !filters.ShowAll {
+		opt.Labels = filters.Labels
 	}
 
 	for {
@@ -61,7 +63,7 @@ func (gh GithubClient) GetIssuesForTriage(ctx context.Context, owner string, rep
 				continue
 			}
 
-			if !showAll && len(labels) == 0 && len(issue.Labels) > 0 {
+			if !filters.ShowAll && len(filters.Labels) == 0 && len(issue.Labels) > 0 {
 				// Currenly no way to get just issues without a label, so we get them all and filter now.
 				continue
 			}

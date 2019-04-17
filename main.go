@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/google/go-github/v18/github"
@@ -26,29 +25,19 @@ type repo struct {
 	Error  error
 }
 
-type labels []string
-
-func (l labels) String() string {
-	return strings.Join(l, ",")
-}
-
-func (l *labels) Set(str string) error {
-	*l = strings.Split(str, ",")
-	return nil
-}
-
 func main() {
 	var port string
 	var singleRepo string
-	var labels labels
-	var showAll bool
+	var filters client.IssueFilters
 	gnuflag.StringVar(&port, "port", "8080", "HTTP port to use for serving HTML page")
 	gnuflag.StringVar(&port, "p", "8080", "HTTP port to use for serving HTML page")
 	gnuflag.StringVar(&singleRepo, "repo", "", "An individual repo to check")
 	gnuflag.StringVar(&singleRepo, "r", "", "An individual repo to check")
-	gnuflag.Var(&labels, "labels", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
-	gnuflag.Var(&labels, "l", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
-	gnuflag.BoolVar(&showAll, "all", false, "Show all issues. All label filters will be ignored")
+	gnuflag.Var(&filters.Labels, "labels", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
+	gnuflag.Var(&filters.Labels, "l", "List of comma separated label names to filter by. By default, only issues with no labels will be shown")
+	gnuflag.Var(&filters.Since, "s", "Only show issues since a certain time, using the following formats such as 1m, 2h, 3d, 4w")
+	gnuflag.Var(&filters.Since, "since", "Only show issues since a certain time, using the following formats: 1m, 2h, 3d, 4w")
+	gnuflag.BoolVar(&filters.ShowAll, "all", false, "Show all issues. All label filters will be ignored")
 
 	gnuflag.Parse(true)
 
@@ -82,7 +71,7 @@ func main() {
 
 	log.Printf("Collecting issues for %d repos", len(repos))
 
-	populateIssues(ghClient, &repos, labels, showAll)
+	populateIssues(ghClient, &repos, filters)
 
 	var err error
 	t := template.New("main")
@@ -96,7 +85,7 @@ func main() {
 	})
 
 	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
-		populateIssues(ghClient, &repos, labels, showAll)
+		populateIssues(ghClient, &repos, filters)
 		http.Redirect(w, r, "/", http.StatusFound)
 	})
 
@@ -107,7 +96,7 @@ func main() {
 
 // populateIssues takes a slice of repos and uses the provided client to repopulate the issues
 // list for each repo.
-func populateIssues(client client.Client, repos *[]repo, labels labels, showAll bool) {
+func populateIssues(client client.Client, repos *[]repo, filter client.IssueFilters) {
 	var wg sync.WaitGroup
 	for i, repo := range *repos {
 		wg.Add(1)
@@ -116,7 +105,7 @@ func populateIssues(client client.Client, repos *[]repo, labels labels, showAll 
 		go func() {
 			defer wg.Done()
 			var err error
-			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name, labels, showAll)
+			(*repos)[i].Issues, err = client.GetIssuesForTriage(context.Background(), repo.Owner, repo.Name, filter)
 			(*repos)[i].Error = err
 			if err != nil {
 				log.Printf("Error gettings issues from %s, Error: %v\n", repo.FullName, err)

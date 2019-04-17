@@ -16,7 +16,7 @@ type IssueFilters struct {
 	Labels Labels
 	// If true, all issues will be gathered regardless of label name.
 	ShowAll bool
-	// Filter by time since created.
+	// Filter by time since created or updated.
 	Since Since
 }
 

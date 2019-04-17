@@ -39,7 +39,7 @@ $ triage --labels bug,todo,critical repolist
 
 Or all issues can be gathered, regardless of label status using `--all`.
 
-To filter by time since issue was created, use `-s`. For example:
+To filter by time since issue was created or updated, use `-s`. For example:
 ```
 $ triage repolist -s 6h  # Last 6 hours
 $ triage repolist -s 2d  # Last 2 days
